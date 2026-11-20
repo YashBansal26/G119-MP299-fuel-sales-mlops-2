@@ -1,0 +1,247 @@
+{
+  "leaking_column": {
+    "present": false,
+    "column": null,
+    "evidence": {
+      "not_in_holdout": [],
+      "abs_corr_with_target": {
+        "highway_distance_km": 0.1596,
+        "nearby_pumps": 0.0649,
+        "price_rs": 0.0962,
+        "trucks_passing": 0.1176,
+        "temp_c": 0.2593,
+        "staff": 0.0264
+      }
+    }
+  },
+  "unit_mixup": {
+    "present": false,
+    "column": null,
+    "group_value": null,
+    "factor": null,
+    "evidence": {
+      "hits": [],
+      "per_group_min_mean_max": {
+        "highway_distance_km": {
+          "City": {
+            "min": 0.05,
+            "mean": 7.479,
+            "max": 14.99
+          },
+          "Highway": {
+            "min": 0.02,
+            "mean": 7.465,
+            "max": 14.99
+          },
+          "Industrial": {
+            "min": 0.14,
+            "mean": 7.487,
+            "max": 14.97
+          }
+        },
+        "nearby_pumps": {
+          "City": {
+            "min": 0,
+            "mean": 5.168,
+            "max": 10
+          },
+          "Highway": {
+            "min": 0,
+            "mean": 4.989,
+            "max": 10
+          },
+          "Industrial": {
+            "min": 0,
+            "mean": 4.943,
+            "max": 10
+          }
+        },
+        "price_rs": {
+          "City": {
+            "min": 90.08,
+            "mean": 99.817,
+            "max": 109.88
+          },
+          "Highway": {
+            "min": 90.0,
+            "mean": 99.779,
+            "max": 109.98
+          },
+          "Industrial": {
+            "min": 90.0,
+            "mean": 99.679,
+            "max": 109.85
+          }
+        },
+        "trucks_passing": {
+          "City": {
+            "min": 22,
+            "mean": 951.419,
+            "max": 1998
+          },
+          "Highway": {
+            "min": 5,
+            "mean": 969.174,
+            "max": 1994
+          },
+          "Industrial": {
+            "min": 11,
+            "mean": 1040.48,
+            "max": 1996
+          }
+        },
+        "temp_c": {
+          "City": {
+            "min": 5.1,
+            "mean": 26.554,
+            "max": 45.7
+          },
+          "Highway": {
+            "min": 5.1,
+            "mean": 25.61,
+            "max": 46.0
+          },
+          "Industrial": {
+            "min": 5.0,
+            "mean": 26.174,
+            "max": 45.8
+          }
+        },
+        "staff": {
+          "City": {
+            "min": 3,
+            "mean": 11.276,
+            "max": 20
+          },
+          "Highway": {
+            "min": 3,
+            "mean": 11.804,
+            "max": 20
+          },
+          "Industrial": {
+            "min": 3,
+            "mean": 11.277,
+            "max": 20
+          }
+        }
+      }
+    }
+  },
+  "sentinel_value": {
+    "present": true,
+    "column": "staff",
+    "value": 999,
+    "count": 66,
+    "evidence": {
+      "hits": [
+        {
+          "column": "staff",
+          "value": 999,
+          "count": 66,
+          "next_largest_value": 20.0
+        }
+      ]
+    }
+  },
+  "duplicate_rows": {
+    "present": false,
+    "count": null,
+    "evidence": {
+      "exact_duplicates": 0,
+      "duplicates_ignoring_record_id": 0
+    }
+  },
+  "stuck_sensor": {
+    "present": true,
+    "column": "nearby_pumps",
+    "start_date": "2026-04-06",
+    "end_date": "2026-04-24",
+    "evidence": {
+      "longest_run_per_column": {
+        "highway_distance_km": {
+          "value": 2.37,
+          "rows": 1,
+          "start": "2026-06-30",
+          "end": "2026-06-30",
+          "days": 1
+        },
+        "nearby_pumps": {
+          "value": 6,
+          "rows": 100,
+          "start": "2026-04-06",
+          "end": "2026-04-24",
+          "days": 18
+        },
+        "price_rs": {
+          "value": 108.72,
+          "rows": 1,
+          "start": "2026-06-30",
+          "end": "2026-06-30",
+          "days": 1
+        },
+        "trucks_passing": {
+          "value": 1257,
+          "rows": 2,
+          "start": "2026-05-07",
+          "end": "2026-05-07",
+          "days": 1
+        },
+        "temp_c": {
+          "value": 28.6,
+          "rows": 2,
+          "start": "2026-02-09",
+          "end": "2026-02-09",
+          "days": 1
+        },
+        "staff": {
+          "value": 9,
+          "rows": 3,
+          "start": "2026-01-20",
+          "end": "2026-01-21",
+          "days": 2
+        }
+      }
+    }
+  },
+  "target_typos": {
+    "present": true,
+    "count": 12,
+    "evidence": {
+      "value_below_gap": 31343,
+      "value_above_gap": 101170,
+      "gap_ratio": 3.23,
+      "typo_median_over_clean_median": 10.6
+    }
+  },
+  "spelling_variants": {
+    "present": false,
+    "column": null,
+    "true_levels": null,
+    "evidence": {
+      "ownership": {
+        "train_levels": [
+          "cooperative",
+          "private",
+          "public_sector"
+        ],
+        "later_levels": [
+          "cooperative",
+          "private",
+          "public_sector"
+        ]
+      },
+      "zone": {
+        "train_levels": [
+          "City",
+          "Highway",
+          "Industrial"
+        ],
+        "later_levels": [
+          "City",
+          "Highway",
+          "Industrial"
+        ]
+      }
+    }
+  }
+}

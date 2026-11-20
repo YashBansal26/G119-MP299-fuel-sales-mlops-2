@@ -1,0 +1,33 @@
+data:
+  train: data/raw/train.csv
+  later: data/raw/later.csv
+  holdout: data/raw/holdout_features.csv
+
+target: litres_per_day
+group_column: zone
+id_column: record_id
+date_column: date
+
+numeric_features:
+  - highway_distance_km
+  - nearby_pumps
+  - price_rs
+  - trucks_passing
+  - temp_c
+  - staff
+categorical_features:
+  - ownership
+  - zone
+
+checks:
+  sentinel_candidates: [-1, -99, -999, 999, 9999, 99999]
+  sentinel_min_count: 10          # a value must repeat at least this often to count as a sentinel
+  unit_factors: [10, 12, 60, 100, 1000]
+  unit_ratio_tolerance: 0.15      # group mean / other groups' mean must be within 15% of a factor
+  stuck_min_run_days: 7           # a run of one value lasting this many days = stuck sensor
+  target_gap_ratio: 2.5           # jump between sorted targets that separates the typos
+  leak_corr_threshold: 0.98
+
+reports:
+  findings: reports/findings.yaml
+  data_checks: reports/data_checks.json
