@@ -193,7 +193,7 @@ def main():
 
     out = ROOT / params["reports"]["data_checks"]
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(results, indent=2, default=str), encoding="utf-8")
+    out.write_text(json.dumps(results, indent=2, default=str) + "\n", encoding="utf-8", newline="\n")
 
     print(f"train.csv: {len(train)} rows\n")
     for kind, r in results.items():

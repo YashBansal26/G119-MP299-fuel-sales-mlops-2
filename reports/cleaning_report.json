@@ -1,0 +1,16 @@
+{
+  "rows_in": 1000,
+  "sentinel_blanked": {
+    "staff": 66
+  },
+  "stuck_blanked": {
+    "nearby_pumps": 100
+  },
+  "filled_with_median": {
+    "nearby_pumps": 5.0,
+    "staff": 12.0
+  },
+  "target_divided_by_10": 12,
+  "rows_out": 1000,
+  "validation_problems": []
+}
