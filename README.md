@@ -11,14 +11,12 @@ SCSE3040 MLOps mini project.
 
 ## Members
 
-| Enrolment no. | Name | Role |
-|---|---|---|
-| S24CSEU0449 | Sakshi | Data lead |
-| S24CSEU0231 | Yash Bansal | Model lead |
-| S24CSEU1801 | Aryan Bansal | Service lead |
-| S24CSEU0076 | Aaryan | Ops lead |
-
-(Roles are a suggestion — swap them to match how you split the work.)
+| Enrolment no. | Name | Role | Owns |
+|---|---|---|---|
+| S24CSEU0231 | Yash Bansal | **Data lead** | DVC setup, the seven data checks (`src/fuel_sales/data_checks.py`), cleaning code, data part of `reports/findings.yaml` |
+| S24CSEU0449 | Sakshi | Model lead | training, MLflow tracking and registry, holdout prediction |
+| S24CSEU0076 | Aaryan | Service lead | FastAPI app, request rules, tests, Dockerfile |
+| S24CSEU1801 | Aryan Bansal | Ops lead | GitHub Actions, Kubernetes files, logging, drift and retraining |
 
 ## The problem
 
@@ -32,10 +30,17 @@ Regression, scored with MAE in litres.
 params.yaml                 settings (paths, columns, check thresholds)
 src/fuel_sales/config.py    loads params.yaml, reads the data files
 src/fuel_sales/data_checks.py   finds the seven data problems in train.csv
+src/fuel_sales/clean.py     fixes them -> data/processed/train_clean.csv
 tests/                      pytest tests (no CSVs needed)
 data/raw/*.csv.dvc          DVC pointers; the CSVs are not in git
+data/processed/train_clean.csv.dvc   DVC pointer to the cleaned training data
 reports/findings.yaml       the filled-in findings form
 reports/data_checks.json    evidence written by data_checks.py
+reports/cleaning_report.json    what clean.py changed
+src/fuel_sales/model.py     the model pipeline (impute + one-hot + regressor)
+src/fuel_sales/train.py     trains v1 with MLflow, registers @champion
+mlflow.db                   MLflow tracking + registry (SQLite)
+models/model.joblib         the champion model the API loads
 ```
 
 ## Setup
@@ -75,3 +80,63 @@ What the checks found in `train.csv` (1000 rows):
 
 `data_sha256` of the original `train.csv`:
 `7d5e7fb87a385182fc2a2372e6cd4a5f8b48220316b37160299e895cc8e86711`
+
+## Stage 2 — cleaning (data lead)
+
+```bash
+python src/fuel_sales/clean.py
+dvc add data/processed/train_clean.csv
+```
+
+`clean.py` runs the seven checks, then fixes only what they found:
+
+| Problem | Fix | Rows |
+|---|---|---|
+| `staff` = 999 | set to blank, filled with the median staff (12) | 66 |
+| `nearby_pumps` stuck at 6 (2026-04-06 → 2026-04-24) | set to blank, filled with the median (5) | 100 |
+| target typed 10× too big | divided by 10 (the cause is known, so the row is kept) | 12 |
+
+No rows are dropped: 1000 in, 1000 out. `validate()` then confirms no
+blanks, no sentinel, no target gap and no duplicates are left, and the
+script stops with an error if any are.
+
+For the model lead: training code should use
+
+```python
+from fuel_sales.clean import clean_train, clean_features
+```
+
+or read `data/processed/train_clean.csv`. `clean_features()` turns
+`staff = 999` into a blank in new data (later.csv, holdout, API requests),
+so the model pipeline should include an imputer.
+
+## Stage 2 — training v1 with MLflow
+
+```bash
+python src/fuel_sales/train.py
+mlflow ui --backend-store-uri sqlite:///mlflow.db     # optional: browse the runs
+```
+
+Each candidate in `params.yaml` is one MLflow run in experiment
+`mp299-fuel-sales`. Every run logs `data_sha256` (SHA-256 of the original
+`train.csv`), its settings, and `mae_cv` (5-fold cross-validated MAE on the
+cleaned data, in litres). The model is fitted on all 1000 cleaned rows.
+
+| Run | mae_cv (litres) |
+|---|---|
+| `v1_ridge` | 962 |
+| `v1_random_forest_200` | 1,399 |
+| `v1_random_forest_400_deep` | 1,383 |
+| `v1_gradient_boosting` | 1,031 |
+| `v1_hist_gradient_boosting` | 1,065 |
+
+The lowest `mae_cv` wins: **ridge** (run `9f4de37350ea448b9aa8bb3d04e78f22`). It
+is registered as `mp299-fuel-sales-model` version 1 with alias
+`@champion`, and saved to `models/model.joblib` for the API.
+
+The model pipeline imputes blanks with the median and ignores unseen
+categories, so a request with `staff` missing or a new `zone` value still
+gets a prediction.
+
+The model files MLflow writes go to `mlruns/`, which is in `.gitignore`;
+only `mlflow.db` is committed, as the handbook asks.

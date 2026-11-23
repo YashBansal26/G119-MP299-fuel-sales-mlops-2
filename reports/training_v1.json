@@ -1,0 +1,35 @@
+{
+  "experiment_name": "mp299-fuel-sales",
+  "best_run_id": "9f4de37350ea448b9aa8bb3d04e78f22",
+  "best_model": "ridge",
+  "registered_model_name": "mp299-fuel-sales-model",
+  "champion_version": 1,
+  "data_sha256": "7d5e7fb87a385182fc2a2372e6cd4a5f8b48220316b37160299e895cc8e86711",
+  "runs": [
+    {
+      "name": "ridge",
+      "run_id": "9f4de37350ea448b9aa8bb3d04e78f22",
+      "mae_cv": 962.0332348227605
+    },
+    {
+      "name": "random_forest_200",
+      "run_id": "4837036e6b47465eaef3dc6f8fcfdc81",
+      "mae_cv": 1398.6034437609812
+    },
+    {
+      "name": "random_forest_400_deep",
+      "run_id": "86673f116d1441b1a402a042331971a8",
+      "mae_cv": 1382.5168124999998
+    },
+    {
+      "name": "gradient_boosting",
+      "run_id": "0b844db135074b56bb2d197224a1bdbb",
+      "mae_cv": 1030.575024362962
+    },
+    {
+      "name": "hist_gradient_boosting",
+      "run_id": "bb05186a27ec4a00912f456fb999de2b",
+      "mae_cv": 1065.02406275548
+    }
+  ]
+}

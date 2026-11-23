@@ -2,6 +2,7 @@ data:
   train: data/raw/train.csv
   later: data/raw/later.csv
   holdout: data/raw/holdout_features.csv
+  train_clean: data/processed/train_clean.csv
 
 target: litres_per_day
 group_column: zone
@@ -31,3 +32,31 @@ checks:
 reports:
   findings: reports/findings.yaml
   data_checks: reports/data_checks.json
+  cleaning: reports/cleaning_report.json
+
+mlflow:
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: mp299-fuel-sales
+  registered_model_name: mp299-fuel-sales-model
+  champion_alias: champion
+
+train:
+  cv_folds: 5
+  random_state: 42
+  model_path: models/model.joblib
+  candidates:                # each one becomes one MLflow run
+    - name: ridge
+      model: ridge
+      params: {alpha: 1.0}
+    - name: random_forest_200
+      model: random_forest
+      params: {n_estimators: 200, max_depth: 12, min_samples_leaf: 2}
+    - name: random_forest_400_deep
+      model: random_forest
+      params: {n_estimators: 400, max_depth: null, min_samples_leaf: 1}
+    - name: gradient_boosting
+      model: gradient_boosting
+      params: {n_estimators: 300, learning_rate: 0.05, max_depth: 3}
+    - name: hist_gradient_boosting
+      model: hist_gradient_boosting
+      params: {max_iter: 300, learning_rate: 0.05, max_leaf_nodes: 15}
