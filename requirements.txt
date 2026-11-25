@@ -6,3 +6,7 @@ joblib==1.6.0
 mlflow==3.18.0
 dvc==3.67.1
 pytest==9.1.1
+fastapi==0.165.0
+pydantic==2.13.5
+uvicorn==0.54.0
+httpx==0.28.1
