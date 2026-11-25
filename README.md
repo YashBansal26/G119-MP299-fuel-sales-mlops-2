@@ -41,6 +41,11 @@ src/fuel_sales/model.py     the model pipeline (impute + one-hot + regressor)
 src/fuel_sales/train.py     trains v1 with MLflow, registers @champion
 mlflow.db                   MLflow tracking + registry (SQLite)
 models/model.joblib         the champion model the API loads
+app/main.py                 FastAPI service: POST /predict, GET /health
+app/logging_config.py       JSON logging to stdout
+Dockerfile, .dockerignore   container image mp299-api:1.0
+.github/workflows/ci.yml    runs pytest on every push
+k8s/                        Deployment mp299-api (4 replicas) + Service mp299-svc
 ```
 
 ## Setup
@@ -140,3 +145,63 @@ gets a prediction.
 
 The model files MLflow writes go to `mlruns/`, which is in `.gitignore`;
 only `mlflow.db` is committed, as the handbook asks.
+
+## Stage 3 — API, container, CI, Kubernetes
+
+### Run the API locally
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Open http://localhost:8000/docs to try it. Example request:
+
+```bash
+curl -X POST http://localhost:8000/predict -H "Content-Type: application/json" \
+  -d '{"highway_distance_km": 7.34, "nearby_pumps": 5, "price_rs": 94.25, "trucks_passing": 1868,
+       "temp_c": 45.3, "staff": 9, "ownership": "public_sector", "zone": "City"}'
+# {"prediction": 29194.3, "litres_per_day": 29194.3, "model_version": "1"}
+```
+
+The client's rules are in the pydantic schema (`StationDay` in `app/main.py`),
+so a bad request gets **422** and never reaches the model:
+
+| Rule | Field |
+|---|---|
+| `temp_c` above 75 is impossible | `Field(..., le=75)` |
+| `highway_distance_km` below 0 is a typing mistake | `Field(..., ge=0)` |
+
+`ownership` and `zone` only accept the three known values. A `staff` of 999
+(the sentinel found in Stage 1) is treated as blank and imputed by the model.
+
+Every prediction writes one JSON line to stdout, for example:
+
+```json
+{"time": "...", "level": "INFO", "logger": "mp299-api", "message": "prediction", "event": "prediction",
+ "zone": "City", "ownership": "public_sector", "prediction": 29194.3, "model_version": "1", "latency_ms": 2.1}
+```
+
+### Docker
+
+```bash
+docker build -t mp299-api:1.0 .
+docker run -p 8000:8000 mp299-api:1.0
+```
+
+### CI
+
+`.github/workflows/ci.yml` runs on every push: Python 3.12, `pip install -r
+requirements.txt`, `pytest`. The tests build their own small data and use the
+committed `models/model.joblib`, so no CSVs are needed.
+
+### Kubernetes
+
+```bash
+kubectl apply -f k8s/
+```
+
+| Thing | Value |
+|---|---|
+| Deployment | `mp299-api`, 4 replicas, image `mp299-api:1.0`, container port 8000 |
+| Service | `mp299-svc`, port 80 → 8000, selector `app: mp299-api` |
+| Probes | readiness and liveness on `/health`; liveness waits longer (20 s vs 5 s) |
