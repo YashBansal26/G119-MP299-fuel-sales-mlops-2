@@ -39,6 +39,8 @@ reports/data_checks.json    evidence written by data_checks.py
 reports/cleaning_report.json    what clean.py changed
 src/fuel_sales/model.py     the model pipeline (impute + one-hot + regressor)
 src/fuel_sales/train.py     trains v1 with MLflow, registers @champion
+src/fuel_sales/monitor.py   PSI drift, MAE per zone, retrains v2, promotion rule, holdout predictions
+predictions/holdout_predictions.csv   champion's predictions for September
 mlflow.db                   MLflow tracking + registry (SQLite)
 models/model.joblib         the champion model the API loads
 app/main.py                 FastAPI service: POST /predict, GET /health
@@ -137,7 +139,8 @@ cleaned data, in litres). The model is fitted on all 1000 cleaned rows.
 
 The lowest `mae_cv` wins: **ridge** (run `9f4de37350ea448b9aa8bb3d04e78f22`). It
 is registered as `mp299-fuel-sales-model` version 1 with alias
-`@champion`, and saved to `models/model.joblib` for the API.
+`@champion`, and saved to `models/model.joblib` for the API. (In Stage 4,
+v2 replaced it as champion.)
 
 The model pipeline imputes blanks with the median and ignores unseen
 categories, so a request with `staff` missing or a new `zone` value still
@@ -205,3 +208,87 @@ kubectl apply -f k8s/
 | Deployment | `mp299-api`, 4 replicas, image `mp299-api:1.0`, container port 8000 |
 | Service | `mp299-svc`, port 80 → 8000, selector `app: mp299-api` |
 | Probes | readiness and liveness on `/health`; liveness waits longer (20 s vs 5 s) |
+
+## Stage 4 — monitoring, retraining and the final prediction
+
+```bash
+python src/fuel_sales/monitor.py
+```
+
+Results are in `reports/monitoring.json` and the `monitoring:` part of
+`reports/findings.yaml`.
+
+### 1. Drift: PSI, cleaned train.csv vs later.csv (10 bins)
+
+Bins are the deciles of the training column; the outer bins are open so
+later values outside the training range still count.
+PSI < 0.1 no drift, 0.1–0.25 moderate, > 0.25 major.
+
+| Column | PSI | |
+|---|---|---|
+| `highway_distance_km` | 0.0378 | no drift |
+| `nearby_pumps` | 0.0898 | no drift |
+| `price_rs` | 0.0578 | no drift |
+| `trucks_passing` | 0.0291 | no drift |
+| `temp_c` | 3.5073 | major drift |
+| `staff` | 0.0790 | no drift |
+
+**Most drifted: `temp_c`.** Training covered January–June (5–46 °C);
+July–August runs 22–63 °C, mostly above anything v1 had seen.
+
+### 2. v1's MAE on later.csv by zone (litres)
+
+| Zone | MAE |
+|---|---|
+| City | 1,815 |
+| Highway | 1,768 |
+| Industrial | 8,949 |
+
+**Worst served: Industrial.** v1 under-predicts Industrial stations by about
+9,000 litres a day at every temperature, so their sales level has changed
+(concept drift), on top of the temperature drift that hurts every zone.
+
+### 3. Retrain v2
+
+`later.csv` sorted by date (ties by `record_id`): first 70% = 210 rows for
+training, last 30% = 90 rows (2026-08-11 → 2026-08-31) for the check.
+
+v2 trains on cleaned `train.csv` + the first 70%. Its settings
+(`monitoring.v2_candidates` in `params.yaml`) were chosen on an **inner
+split of that 70%** (first 70% of it trains, last 30% validates), so the
+check rows never influence the choice:
+
+| v2 candidate | inner-validation MAE |
+|---|---|
+| `ridge_same_as_v1` | 2,208 |
+| `ridge_recent5` | 1,511 |
+| `ridge_poly2` | 1,772 |
+| `ridge_poly2_recent5` | 1,317 |
+| `ridge_poly2_recent10` | 1,196 |
+| `ridge_poly2_recent20` | 1,160 |
+| `gradient_boosting_recent5` | 1,842 |
+
+Chosen: **`ridge_poly2_recent20`**: Ridge on degree-2 features (lets sales
+curve upward with temperature and differ by zone), with later.csv rows
+weighted 20× so the model follows the new situation.
+
+### 4. Promotion rule
+
+| | MAE on the last 30% |
+|---|---|
+| v1 | 4,111.5 |
+| v2 | 982.4 |
+
+v2 is 76.1% better; the rule needs at least 15%.
+**Decision: promote.** v2 is version 2 of
+`mp299-fuel-sales-model` and now has the `@champion` alias;
+`models/model.joblib` (served by the API) is v2.
+
+### 5. Final prediction
+
+The champion predicts every row of `data/raw/holdout_features.csv`:
+`predictions/holdout_predictions.csv`, columns `record_id,prediction`,
+250 rows.
+
+**Don't run `train.py` or `monitor.py` again**: each run adds versions to
+`mlflow.db`. To redo Stage 4, restore `mlflow.db` from the Stage 2 commit first.
