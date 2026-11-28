@@ -1,0 +1,53 @@
+{
+  "psi": {
+    "highway_distance_km": 0.0378,
+    "nearby_pumps": 0.0898,
+    "price_rs": 0.0578,
+    "trucks_passing": 0.0291,
+    "temp_c": 3.5073,
+    "staff": 0.079
+  },
+  "psi_label": {
+    "highway_distance_km": "no drift",
+    "nearby_pumps": "no drift",
+    "price_rs": "no drift",
+    "trucks_passing": "no drift",
+    "temp_c": "major drift",
+    "staff": "no drift"
+  },
+  "most_drifted_feature": "temp_c",
+  "mae_by_group": {
+    "City": 1815.09,
+    "Highway": 1768.35,
+    "Industrial": 8949.37
+  },
+  "worst_served_group": "Industrial",
+  "mae_v1_on_later": 3768.97,
+  "check_split": {
+    "first_rows": 210,
+    "last_rows": 90,
+    "last_dates": [
+      "2026-08-11",
+      "2026-08-31"
+    ]
+  },
+  "v2_inner_validation_mae": {
+    "ridge_same_as_v1": 2208.0,
+    "ridge_recent5": 1511.3,
+    "ridge_poly2": 1771.6,
+    "ridge_poly2_recent5": 1316.7,
+    "ridge_poly2_recent10": 1195.9,
+    "ridge_poly2_recent20": 1160.2,
+    "gradient_boosting_recent5": 1842.2
+  },
+  "v2_choice": "ridge_poly2_recent20",
+  "mae_v1_on_check": 4111.52,
+  "mae_v2_on_check": 982.39,
+  "improvement_pct": 76.11,
+  "rule": "promote if v2 MAE <= 0.85 x v1 MAE",
+  "decision": "promote",
+  "v2_run_id": "b9a53f25e1e849369d7b8004df934149",
+  "v2_registered_version": 2,
+  "champion_version": 2,
+  "holdout_rows_predicted": 250
+}

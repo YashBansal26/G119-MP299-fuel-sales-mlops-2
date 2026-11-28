@@ -21,7 +21,7 @@ from app.logging_config import get_logger
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.getenv("MODEL_PATH", ROOT / "models" / "model.joblib"))
-MODEL_VERSION = os.getenv("MODEL_VERSION", "1")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "2")
 STAFF_SENTINEL = 999  # found in train.csv: 999 was typed instead of a blank
 
 FEATURES = ["highway_distance_km", "nearby_pumps", "price_rs", "trucks_passing",

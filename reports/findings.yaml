@@ -41,22 +41,22 @@ tracking:
   experiment_name: "mp299-fuel-sales"
   best_run_id: "9f4de37350ea448b9aa8bb3d04e78f22" # the MLflow run id of your v1 model
   registered_model_name: "mp299-fuel-sales-model"
-  champion_version: 1
+  champion_version: 2
 
 monitoring:
   psi:                     # cleaned train.csv vs later.csv, 10 bins
-    highway_distance_km: null
-    nearby_pumps: null
-    price_rs: null
-    trucks_passing: null
-    temp_c: null
-    staff: null
-  most_drifted_feature: null
+    highway_distance_km: 0.0378
+    nearby_pumps: 0.0898
+    price_rs: 0.0578
+    trucks_passing: 0.0291
+    temp_c: 3.5073
+    staff: 0.079
+  most_drifted_feature: "temp_c"
   mae_by_group:            # v1 on later.csv, per value of zone
-    'Highway': null
-    'City': null
-    'Industrial': null
-  worst_served_group: null
-  mae_v1_on_check: null    # v1 on the last 30% of later.csv (by date)
-  mae_v2_on_check: null    # v2 on the same rows
-  decision: null           # promote or keep
+    'Highway': 1768.35
+    'City': 1815.09
+    'Industrial': 8949.37
+  worst_served_group: "Industrial"
+  mae_v1_on_check: 4111.52    # v1 on the last 30% of later.csv (by date)
+  mae_v2_on_check: 982.39    # v2 on the same rows
+  decision: "promote"           # promote or keep
